@@ -1,0 +1,8 @@
+# seguridad
+*.pem
+*.crx
+
+# windows
+*.lnk
+thumbs.db
+desktop.ini
