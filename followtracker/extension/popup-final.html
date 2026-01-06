@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>FollowTracker</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <div class="header">
+      <h1>📊 FollowTracker</h1>
+      <p class="subtitle">Instagram Follower Manager</p>
+    </div>
+
+    <!-- Status -->
+    <div class="status" id="status">
+      <div class="status-item">
+        <span class="status-label">Último escaneo:</span>
+        <span class="status-value" id="lastScan">Nunca</span>
+      </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="actions">
+      <button id="scanBtn" class="btn btn-primary">
+        🔍 Escanear Completo
+      </button>
+      <button id="exportBtn" class="btn btn-secondary">
+        📥 Exportar CSV
+      </button>
+    </div>
+
+    <!-- Loading -->
+    <div id="loading" class="loading hidden">
+      <div class="spinner"></div>
+      <p id="loadingText">Escaneando...</p>
+    </div>
+
+    <!-- Stats -->
+    <div id="stats" class="stats hidden">
+      <div class="stat-box">
+        <div class="stat-number" id="followersCount">0</div>
+        <div class="stat-label">Seguidores</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-number" id="followingCount">0</div>
+        <div class="stat-label">Siguiendo</div>
+      </div>
+    </div>
+
+    <!-- Results -->
+    <div id="results" class="results hidden">
+      <!-- No te siguen de vuelta -->
+      <div class="section">
+        <div class="section-header-fixed">
+          <span>👻 Sigues pero no te siguen (<span id="notFollowBackCount">0</span>)</span>
+        </div>
+        <div class="section-content-scroll">
+          <div id="notFollowBackList" class="user-list"></div>
+        </div>
+      </div>
+
+      <!-- Te siguen pero no los sigues -->
+      <div class="section">
+        <div class="section-header-fixed">
+          <span>😎 Te siguen pero no los sigues (<span id="followYouCount">0</span>)</span>
+        </div>
+        <div class="section-content-scroll">
+          <div id="followYouList" class="user-list"></div>
+        </div>
+      </div>
+
+      <!-- Mutuos -->
+      <div class="section">
+        <div class="section-header-fixed">
+          <span>🤝 Mutuos - Se siguen mutuamente (<span id="mutualCount">0</span>)</span>
+        </div>
+        <div class="section-content-scroll">
+          <div id="mutualList" class="user-list"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Instructions -->
+    <div id="instructions" class="instructions">
+      <h3>📖 Cómo usar:</h3>
+      <ol>
+        <li>Ve a tu perfil de Instagram</li>
+        <li>Haz click en "Escanear Completo"</li>
+        <li>Espera 1-2 minutos mientras escanea</li>
+        <li>¡Listo! Ve los resultados</li>
+      </ol>
+      <p class="note">⚠️ Debes estar en instagram.com para escanear</p>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+      <p>Open Source ❤️</p>
+      <a href="https://github.com/tu-usuario/followtracker" target="_blank">GitHub</a>
+      <span>•</span>
+      <a href="#" id="donateLink">💰 Donate BTC</a>
+    </div>
+  </div>
+
+  <script src="popup-final.js"></script>
+</body>
+</html>

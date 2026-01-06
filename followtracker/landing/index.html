@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CheeseMe - Instagram Follower Manager</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Arial', sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      background: #c0c0c0;
+      border: 3px outset #ffffff;
+      box-shadow: 8px 8px 0px #000000;
+    }
+
+    header {
+      background: linear-gradient(to right, #ff6b6b, #ee5a6f);
+      color: white;
+      padding: 40px 20px;
+      text-align: center;
+      border-bottom: 3px groove #ffffff;
+    }
+
+    header h1 {
+      font-size: 48px;
+      margin-bottom: 10px;
+    }
+
+    header p {
+      font-size: 18px;
+      opacity: 0.95;
+    }
+
+    .content {
+      padding: 40px 30px;
+    }
+
+    .section {
+      background: #ffffff;
+      border: 2px groove #ffffff;
+      padding: 25px;
+      margin-bottom: 25px;
+    }
+
+    .section h2 {
+      color: #667eea;
+      margin-bottom: 15px;
+      font-size: 24px;
+    }
+
+    .features {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 20px;
+      margin-top: 20px;
+    }
+
+    .feature {
+      background: linear-gradient(135deg, #ffeaa7 0%, #fdcb6e 100%);
+      border: 2px groove #ffffff;
+      padding: 20px;
+      text-align: center;
+    }
+
+    .feature-icon {
+      font-size: 40px;
+      margin-bottom: 10px;
+    }
+
+    .feature h3 {
+      font-size: 16px;
+      margin-bottom: 8px;
+      color: #2d3436;
+    }
+
+    .feature p {
+      font-size: 13px;
+      color: #636e72;
+      line-height: 1.5;
+    }
+
+    .cta-buttons {
+      display: flex;
+      gap: 15px;
+      justify-content: center;
+      margin: 30px 0;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      padding: 15px 30px;
+      border: 3px outset #ffffff;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-block;
+      transition: all 0.1s;
+    }
+
+    .btn:active {
+      border: 3px inset #ffffff;
+    }
+
+    .btn-primary {
+      background: linear-gradient(to bottom, #55efc4, #00b894);
+      color: white;
+    }
+
+    .btn-secondary {
+      background: linear-gradient(to bottom, #74b9ff, #0984e3);
+      color: white;
+    }
+
+    .install-steps {
+      background: #dfe6e9;
+      border: 2px inset #ffffff;
+      padding: 20px;
+      margin-top: 20px;
+    }
+
+    .install-steps ol {
+      margin-left: 25px;
+      line-height: 2;
+    }
+
+    .donate-section {
+      background: linear-gradient(135deg, #a29bfe 0%, #6c5ce7 100%);
+      border: 2px groove #ffffff;
+      padding: 30px;
+      text-align: center;
+      color: white;
+    }
+
+    .donate-section h2 {
+      color: white;
+      margin-bottom: 15px;
+    }
+
+    .btc-address {
+      background: rgba(255, 255, 255, 0.2);
+      border: 2px inset #ffffff;
+      padding: 15px;
+      font-family: monospace;
+      font-size: 14px;
+      word-break: break-all;
+      margin: 20px 0;
+      color: white;
+    }
+
+    .qr-placeholder {
+      background: white;
+      width: 200px;
+      height: 200px;
+      margin: 20px auto;
+      border: 2px groove #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #666;
+      font-size: 14px;
+    }
+
+    footer {
+      background: linear-gradient(to right, #55efc4, #00b894);
+      border-top: 3px groove #ffffff;
+      padding: 20px;
+      text-align: center;
+    }
+
+    footer a {
+      color: #2d3436;
+      text-decoration: none;
+      font-weight: bold;
+      margin: 0 10px;
+    }
+
+    footer a:hover {
+      text-decoration: underline;
+    }
+
+    .badge {
+      display: inline-block;
+      background: #00b894;
+      color: white;
+      padding: 5px 10px;
+      border-radius: 3px;
+      font-size: 12px;
+      font-weight: bold;
+      margin: 5px;
+    }
+
+    @media (max-width: 768px) {
+      header h1 {
+        font-size: 32px;
+      }
+
+      .content {
+        padding: 20px 15px;
+      }
+
+      .cta-buttons {
+        flex-direction: column;
+      }
+
+      .btn {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>📊 FollowTracker</h1>
+      <p>Instagram Follower Manager - Open Source & Free Forever</p>
+      <div style="margin-top: 15px;">
+        <span class="badge">🆓 100% Gratis</span>
+        <span class="badge">🔒 Privacy First</span>
+        <span class="badge">💾 Todo Local</span>
+        <span class="badge">❤️ Open Source</span>
+      </div>
+    </header>
+
+    <div class="content">
+      <!-- CTA Principal -->
+      <div class="cta-buttons">
+        <a href="https://github.com/soyMarioPineda/CheesMe" class="btn btn-primary" target="_blank">
+          📥 Descargar de GitHub
+        </a>
+        <a href="https://github.com/soyMarioPineda/CheesMe#installation" class="btn btn-secondary" target="_blank">
+          📖 Ver Instrucciones
+        </a>
+      </div>
+
+      <!-- Features -->
+      <div class="section">
+        <h2>✨ ¿Qué hace?</h2>
+        <div class="features">
+          <div class="feature">
+            <div class="feature-icon">💔</div>
+            <h3>Detecta Unfollows</h3>
+            <p>Descubre quién te dejó de seguir en Instagram</p>
+          </div>
+          <div class="feature">
+            <div class="feature-icon">🆕</div>
+            <h3>Nuevos Seguidores</h3>
+            <p>Ve quién empezó a seguirte recientemente</p>
+          </div>
+          <div class="feature">
+            <div class="feature-icon">👻</div>
+            <h3>No te Siguen de Vuelta</h3>
+            <p>Encuentra a quién sigues pero no te sigue</p>
+          </div>
+          <div class="feature">
+            <div class="feature-icon">😎</div>
+            <h3>Te Siguen y No Sigues</h3>
+            <p>Ve quién te sigue pero tú no los sigues</p>
+          </div>
+          <div class="feature">
+            <div class="feature-icon">🤝</div>
+            <h3>Seguidores Mutuos</h3>
+            <p>Lista completa de tus amigos mutuos</p>
+          </div>
+          <div class="feature">
+            <div class="feature-icon">📥</div>
+            <h3>Exportar a CSV</h3>
+            <p>Descarga todos tus datos en formato Excel</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Instalación -->
+      <div class="section">
+        <h2>🚀 Instalación Super Fácil</h2>
+        <div class="install-steps">
+          <ol>
+            <li><strong>Descarga</strong> la extensión desde GitHub</li>
+            <li>Abre Chrome y ve a <code>chrome://extensions/</code></li>
+            <li>Activa el <strong>"Modo de desarrollador"</strong> (arriba a la derecha)</li>
+            <li>Haz click en <strong>"Cargar extensión sin empaquetar"</strong></li>
+            <li>Selecciona la carpeta <code>extension</code></li>
+            <li>¡Listo! Abre Instagram y pruébala 🎉</li>
+          </ol>
+        </div>
+        <p style="margin-top: 15px; color: #d63031; font-weight: bold;">
+          ⚠️ Pronto estará disponible en Chrome Web Store para instalación con 1 click
+        </p>
+      </div>
+
+      <!-- Por qué Open Source -->
+      <div class="section">
+        <h2>💡 ¿Por qué Open Source?</h2>
+        <ul style="line-height: 2; margin-left: 25px;">
+          <li>🔒 <strong>Privacidad Total</strong> - Tu data nunca sale de tu computadora</li>
+          <li>🔍 <strong>Transparencia</strong> - Puedes revisar todo el código</li>
+          <li>🆓 <strong>Gratis para Siempre</strong> - Sin suscripciones ni paywalls</li>
+          <li>🤝 <strong>Community Driven</strong> - Todos pueden contribuir y mejorar</li>
+          <li>🚀 <strong>Sin Límites</strong> - Todas las funciones disponibles para todos</li>
+        </ul>
+      </div>
+
+      <!-- Donaciones -->
+      <div class="donate-section">
+        <h2>💝 ¿Te Sirvió? Apoya el Proyecto</h2>
+        <p>Este proyecto es 100% gratuito y open source.</p>
+        <p>Si te ayudó, considera hacer una donación en Bitcoin:</p>
+        
+        <div class="btc-address">
+          bc1qmjgqu7m997je8xvqm45zpke6tk9c4aus4frvxt
+        </div>
+
+        <p style="font-size: 14px; margin-top: 15px;">
+          También puedes apoyar:<br>
+          ⭐ Dando una estrella en GitHub<br>
+          🐛 Reportando bugs<br>
+          💡 Sugiriendo features<br>
+          🤝 Contribuyendo código
+        </p>
+      </div>
+
+      <!-- Legal -->
+      <div class="section">
+        <h2>⚠️ Disclaimer Legal</h2>
+        <p style="line-height: 1.8; color: #636e72;">
+          Esta extensión <strong>no está afiliada</strong> con Instagram o Meta. 
+          Funciona leyendo datos públicamente visibles cuando estás logueado en Instagram.
+          El uso de esta extensión está en una zona gris legal - úsala bajo tu propio riesgo.
+          <br><br>
+          <strong>Licencia:</strong> MIT License - Libre para usar, modificar y distribuir.
+          <br>
+          <strong>Sin Garantías:</strong> El proyecto se proporciona "tal cual" sin garantía de ningún tipo.
+        </p>
+      </div>
+    </div>
+
+    <footer>
+      <p style="margin-bottom: 10px; font-weight: bold;">
+        Made with ❤️ by the Open Source Community
+      </p>
+      <div>
+        <a href="https://github.com/soyMarioPineda/CheeseMe" target="_blank">GitHub</a>
+        <a href="https://github.com/soyMarioPineda/CheeseMe/issues" target="_blank">Report Bug</a>
+        <a href="https://github.com/soyMarioPineda/CheeseMe#contributing" target="_blank">Contribute</a>
+        <a href="https://github.com/soyMarioPineda/CheeseMe/blob/main/LICENSE" target="_blank">License</a>
+      </div>
+      <p style="margin-top: 10px; font-size: 12px;">
+        © 2025 CheeseMe - Open Source Project
+      </p>
+    </footer>
+  </div>
+</body>
+</html>
