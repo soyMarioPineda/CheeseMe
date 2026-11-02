@@ -21,9 +21,7 @@ async function init() {
 function setupEventListeners() {
   document.getElementById('scanBtn').addEventListener('click', startFullScan);
   document.getElementById('cancelBtn').addEventListener('click', cancelScan);
-  document.getElementById('exportBtn').addEventListener('click', exportToCSV);
-  document.getElementById('donateLink').addEventListener('click', showDonation);
-}
+  document.getElementById('exportBtn').addEventListener('click', exportToCSV);}
 
 function onStorageChanged(changes, area) {
   if (area !== 'local') return;
@@ -236,11 +234,6 @@ function show(id) {
 
 function hide(id) {
   document.getElementById(id).classList.add('hidden');
-}
-
-function showDonation() {
-  const btcAddress = 'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh';
-  alert(`💰 Donaciones Bitcoin:\n\n${btcAddress}\n\n¡Gracias por tu apoyo! ❤️`);
 }
 
 function getTimeAgo(date) {
