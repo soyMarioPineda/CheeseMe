@@ -102,6 +102,8 @@ function renderScanState(state) {
 
   if (state && state.status === 'error' && state.error) {
     showError(state.error);
+  } else if (state && state.status === 'done' && state.warning) {
+    showMessage(`⚠️ ${state.warning}`);
   }
 }
 
@@ -219,8 +221,12 @@ function updateLastScan(timestamp) {
 }
 
 function showError(message) {
+  showMessage(`❌ ${message}`);
+}
+
+function showMessage(text) {
   const el = document.getElementById('error');
-  el.textContent = `❌ ${message}`;
+  el.textContent = text;
   show('error');
 }
 

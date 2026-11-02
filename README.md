@@ -43,7 +43,10 @@ No borres ni muevas la carpeta después de instalar la extensión: el navegador 
 1. Inicia sesión en [instagram.com](https://www.instagram.com).
 2. Abre el perfil que quieres revisar: el tuyo o el de cualquier cuenta que puedas ver (pública, o privada si la sigues).
 3. Abre la extensión y haz click en **Escanear Completo**.
-4. Espera a que termine; tarda más o menos 1 minuto por cada 1.500 cuentas. Puedes cerrar la ventanita de la extensión mientras tanto; el escaneo sigue en la pestaña de Instagram, solo no cierres ni recargues esa pestaña.
+4. Vas a ver cómo la extensión abre la lista de seguidores, la va bajando, la cierra y hace lo mismo con los seguidos, como si lo hicieras tú a mano. Arriba a la derecha aparece un aviso con el avance. Tarda un rato en cuentas grandes porque espera a que Instagram cargue cada bloque.
+   - Deja la pestaña de Instagram **abierta y a la vista** hasta que termine. Si cambias de pestaña o minimizas el navegador, Instagram deja de cargar cuentas.
+   - No muevas el ratón sobre la lista ni la cierres mientras escanea.
+   - Puedes cerrar la ventanita de la extensión; al volver a abrirla ves el progreso.
 5. Revisa los resultados y, si quieres guardarlos, haz click en **Exportar CSV**. El archivo se abre en Excel o Google Sheets.
 
 ### Actualizarla
@@ -53,6 +56,7 @@ Cuando haya una versión nueva, descarga el código otra vez (o haz `git pull`),
 ### Problemas comunes
 
 - **"Debes estar en instagram.com"**: abre la extensión estando en una pestaña de Instagram.
-- **"Instagram está limitando las peticiones"**: hiciste muchos escaneos seguidos. Espera unos minutos y vuelve a intentarlo.
+- **"Instagram dejó de cargar ... antes del final"**: en cuentas muy grandes, o si escaneas muchas veces seguidas, Instagram deja de cargar más cuentas un rato (también te pasaría bajando a mano). Espera unos minutos y vuelve a escanear.
+- **"No se encontraron los botones de seguidores/seguidos"**: asegúrate de estar en la página del perfil (instagram.com/usuario) y no en el inicio o en una publicación.
 - **"Es una cuenta privada y no la sigues"**: Instagram no muestra las listas de cuentas privadas que no sigues.
 - **El número no coincide exactamente con el del perfil**: Instagram no devuelve las cuentas desactivadas o restringidas, así que puede haber una pequeña diferencia.
