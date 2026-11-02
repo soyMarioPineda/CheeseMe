@@ -1,209 +1,241 @@
+// Si el estado "running" no se actualiza en este tiempo, la pestaña se cerró o
+// se recargó a mitad del escaneo.
+const STALE_MS = 2 * 60 * 1000;
+
 document.addEventListener('DOMContentLoaded', init);
 
-function init() {
-  loadLastScan();
+async function init() {
   setupEventListeners();
+  chrome.storage.onChanged.addListener(onStorageChanged);
+
+  const { lastScan, lastData, scanState } = await chrome.storage.local.get(['lastScan', 'lastData', 'scanState']);
+
+  updateLastScan(lastScan);
+  if (lastData) {
+    displayResults(lastData);
+    hide('instructions');
+  }
+  renderScanState(scanState);
 }
 
 function setupEventListeners() {
   document.getElementById('scanBtn').addEventListener('click', startFullScan);
+  document.getElementById('cancelBtn').addEventListener('click', cancelScan);
   document.getElementById('exportBtn').addEventListener('click', exportToCSV);
   document.getElementById('donateLink').addEventListener('click', showDonation);
 }
 
-async function loadLastScan() {
-  const data = await chrome.storage.local.get(['lastScan', 'lastData']);
-  
-  if (data.lastScan) {
-    const date = new Date(data.lastScan);
-    const timeAgo = getTimeAgo(date);
-    document.getElementById('lastScan').textContent = timeAgo;
+function onStorageChanged(changes, area) {
+  if (area !== 'local') return;
+  if (changes.lastData && changes.lastData.newValue) {
+    displayResults(changes.lastData.newValue);
+    hide('instructions');
   }
-
-  if (data.lastData) {
-    displayResults(data.lastData);
-    document.getElementById('instructions').classList.add('hidden');
-  }
+  if (changes.lastScan) updateLastScan(changes.lastScan.newValue);
+  if (changes.scanState) renderScanState(changes.scanState.newValue);
 }
 
+// -----------------------------------------------------------------------------
+// Escaneo
+// -----------------------------------------------------------------------------
+
 async function startFullScan() {
-  const scanBtn = document.getElementById('scanBtn');
-  const loading = document.getElementById('loading');
-  const loadingText = document.getElementById('loadingText');
-  const results = document.getElementById('results');
-  const instructions = document.getElementById('instructions');
+  hideError();
 
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-  
-  if (!tab.url.includes('instagram.com')) {
-    alert('⚠️ Debes estar en Instagram para escanear.\n\nAbre instagram.com en tu perfil e intenta de nuevo.');
+  if (!tab || !tab.url || !/^https:\/\/www\.instagram\.com\//.test(tab.url)) {
+    showError('Debes estar en instagram.com (en el perfil que quieres escanear).');
     return;
   }
 
-  scanBtn.disabled = true;
-  loading.classList.remove('hidden');
-  results.classList.add('hidden');
-  instructions.classList.add('hidden');
+  document.getElementById('scanBtn').disabled = true;
 
   try {
-    // Escanear SEGUIDORES
-    loadingText.textContent = '📥 Escaneando seguidores...';
-    const followersResponse = await chrome.tabs.sendMessage(tab.id, { action: 'scanFollowers' });
-    
-    if (!followersResponse.success) {
-      throw new Error(followersResponse.error);
+    await ensureContentScript(tab.id);
+    const response = await chrome.tabs.sendMessage(tab.id, { action: 'startScan' });
+    if (!response || !response.success) {
+      throw new Error(response?.error || 'No se pudo iniciar el escaneo.');
     }
-
-    const followers = followersResponse.data;
-    console.log('✅ Seguidores:', followers.length);
-
-    // Escanear SEGUIDOS
-    loadingText.textContent = '📤 Escaneando seguidos...';
-    await sleep(1000); // Pausa entre escaneos
-    
-    const followingResponse = await chrome.tabs.sendMessage(tab.id, { action: 'scanFollowing' });
-    
-    if (!followingResponse.success) {
-      throw new Error(followingResponse.error);
-    }
-
-    const following = followingResponse.data;
-    console.log('✅ Siguiendo:', following.length);
-
-    // Calcular categorías
-    loadingText.textContent = '🔄 Analizando datos...';
-    await sleep(500);
-
-    const data = {
-      followers,
-      following,
-      timestamp: Date.now()
-    };
-
-    // Guardar
-    await chrome.storage.local.set({
-      lastScan: data.timestamp,
-      lastData: data
-    });
-
-    // Mostrar resultados
-    loading.classList.add('hidden');
-    displayResults(data);
-    
-    alert('✅ Escaneo completado exitosamente!');
-
+    // A partir de aquí la UI se actualiza con los cambios de scanState.
+    renderScanState({ status: 'running', message: 'Iniciando...', updatedAt: Date.now() });
   } catch (error) {
-    loading.classList.add('hidden');
-    alert('❌ Error: ' + error.message + '\n\nAsegúrate de estar en tu perfil de Instagram.');
-    console.error('Scan error:', error);
-  } finally {
-    scanBtn.disabled = false;
+    document.getElementById('scanBtn').disabled = false;
+    showError(error.message);
   }
 }
 
+async function cancelScan() {
+  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+  try {
+    await chrome.tabs.sendMessage(tab.id, { action: 'cancelScan' });
+  } catch (_) {
+    // La pestaña ya no tiene el script: marcamos el escaneo como cancelado.
+    await chrome.storage.local.set({ scanState: { status: 'cancelled', updatedAt: Date.now() } });
+  }
+}
+
+// El content script solo se inyecta al cargar la página. Si la extensión se
+// instaló/recargó con Instagram ya abierto, lo inyectamos a mano.
+async function ensureContentScript(tabId) {
+  try {
+    const res = await chrome.tabs.sendMessage(tabId, { action: 'ping' });
+    if (res && res.ok) return;
+  } catch (_) { /* no hay receptor */ }
+
+  await chrome.scripting.executeScript({ target: { tabId }, files: ['scraper.js'] });
+}
+
+function renderScanState(state) {
+  const scanBtn = document.getElementById('scanBtn');
+  const isRunning = state && state.status === 'running' && Date.now() - (state.updatedAt || 0) < STALE_MS;
+
+  if (isRunning) {
+    scanBtn.disabled = true;
+    show('loading');
+    hide('instructions');
+    document.getElementById('loadingText').textContent = state.message || 'Escaneando...';
+    const target = document.getElementById('loadingTarget');
+    target.textContent = state.username ? `Perfil: @${state.username}` : '';
+    return;
+  }
+
+  scanBtn.disabled = false;
+  hide('loading');
+
+  if (state && state.status === 'error' && state.error) {
+    showError(state.error);
+  }
+}
+
+// -----------------------------------------------------------------------------
+// Resultados
+// -----------------------------------------------------------------------------
+
+function categorize(data) {
+  const followersSet = new Set(data.followers);
+  const followingSet = new Set(data.following);
+  return {
+    // Sigue pero no le siguen de vuelta
+    notFollowBack: data.following.filter((u) => !followersSet.has(u)),
+    // Le siguen pero no los sigue
+    followYou: data.followers.filter((u) => !followingSet.has(u)),
+    // Se siguen mutuamente
+    mutual: data.followers.filter((u) => followingSet.has(u))
+  };
+}
+
 function displayResults(data) {
-  const { followers, following } = data;
+  const { followers, following, username, expected } = data;
+  const { notFollowBack, followYou, mutual } = categorize(data);
 
-  // Convertir a Sets
-  const followersSet = new Set(followers);
-  const followingSet = new Set(following);
+  show('stats');
+  show('results');
 
-  // Calcular categorías
-  // YO sigo pero NO me siguen
-  const notFollowBack = following.filter(user => !followersSet.has(user));
-  
-  // ELLOS me siguen pero YO NO los sigo
-  const followYou = followers.filter(user => !followingSet.has(user));
-  
-  // MUTUOS - nos seguimos
-  const mutual = followers.filter(user => followingSet.has(user));
+  document.getElementById('profileRow').classList.toggle('hidden', !username);
+  document.getElementById('profileName').textContent = username ? `@${username}` : '';
 
-  // Mostrar stats
-  document.getElementById('stats').classList.remove('hidden');
-  document.getElementById('results').classList.remove('hidden');
-  
   document.getElementById('followersCount').textContent = followers.length;
   document.getElementById('followingCount').textContent = following.length;
+  setExpectedNote('followersNote', followers.length, expected?.followers);
+  setExpectedNote('followingNote', following.length, expected?.following);
 
-  // Debug
-  console.log('=== CATEGORÍAS ===');
-  console.log('Seguidores:', followers.length);
-  console.log('Siguiendo:', following.length);
-  console.log('Sigues pero no te siguen:', notFollowBack.length);
-  console.log('Te siguen pero no los sigues:', followYou.length);
-  console.log('Mutuos:', mutual.length);
-  console.log('');
-  console.log('✅ Verificación 1:', followYou.length, '+', mutual.length, '=', followers.length);
-  console.log('✅ Verificación 2:', notFollowBack.length, '+', mutual.length, '=', following.length);
-
-  // Actualizar UI
   updateSection(notFollowBack, 'notFollowBackCount', 'notFollowBackList');
   updateSection(followYou, 'followYouCount', 'followYouList');
   updateSection(mutual, 'mutualCount', 'mutualList');
 }
 
+// Instagram a veces no devuelve cuentas desactivadas/restringidas, así que el
+// total puede diferir un poco del contador del perfil.
+function setExpectedNote(id, got, expected) {
+  const el = document.getElementById(id);
+  el.textContent = expected != null && expected !== got ? `Instagram muestra ${expected}` : '';
+}
+
 function updateSection(users, countId, listId) {
   document.getElementById(countId).textContent = users.length;
-  
+
   const listEl = document.getElementById(listId);
-  listEl.innerHTML = '';
+  listEl.replaceChildren();
 
   if (users.length === 0) {
-    listEl.innerHTML = '<div class="user-item">Sin usuarios en esta categoría</div>';
+    const empty = document.createElement('div');
+    empty.className = 'user-item';
+    empty.textContent = 'Sin usuarios en esta categoría';
+    listEl.appendChild(empty);
     return;
   }
 
-  users.forEach(username => {
+  const fragment = document.createDocumentFragment();
+  for (const username of users) {
     const item = document.createElement('div');
     item.className = 'user-item';
-    item.innerHTML = `<a href="https://instagram.com/${username}" target="_blank">@${username}</a>`;
-    listEl.appendChild(item);
-  });
+    const link = document.createElement('a');
+    link.href = `https://www.instagram.com/${encodeURIComponent(username)}/`;
+    link.target = '_blank';
+    link.textContent = `@${username}`;
+    item.appendChild(link);
+    fragment.appendChild(item);
+  }
+  listEl.appendChild(fragment);
 }
 
 async function exportToCSV() {
-  const data = await chrome.storage.local.get(['lastData']);
-  
-  if (!data.lastData) {
-    alert('No hay datos para exportar. Primero escanea tu cuenta.');
+  const { lastData } = await chrome.storage.local.get(['lastData']);
+
+  if (!lastData) {
+    showError('No hay datos para exportar. Primero escanea una cuenta.');
     return;
   }
 
-  const { followers, following } = data.lastData;
-  const followersSet = new Set(followers);
-  const followingSet = new Set(following);
+  const { notFollowBack, followYou, mutual } = categorize(lastData);
+  const rows = [['Username', 'Categoria']];
+  mutual.forEach((u) => rows.push([u, 'Mutuo']));
+  followYou.forEach((u) => rows.push([u, 'Le sigue (no lo sigue de vuelta)']));
+  notFollowBack.forEach((u) => rows.push([u, 'Lo sigue (no le sigue de vuelta)']));
 
-  let csv = 'Username,Categoria\n';
-
-  // Mutuos
-  followers.forEach(user => {
-    if (followingSet.has(user)) {
-      csv += `${user},Mutuo\n`;
-    }
-  });
-
-  // Te siguen pero no los sigues
-  followers.forEach(user => {
-    if (!followingSet.has(user)) {
-      csv += `${user},Te sigue (no lo sigues)\n`;
-    }
-  });
-
-  // Sigues pero no te siguen
-  following.forEach(user => {
-    if (!followersSet.has(user)) {
-      csv += `${user},Sigues (no te sigue)\n`;
-    }
-  });
-
-  // Descargar
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const csv = rows.map((r) => r.map(csvCell).join(',')).join('\r\n');
+  // BOM para que Excel detecte UTF-8 (acentos).
+  const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
+  const date = new Date(lastData.timestamp).toISOString().slice(0, 10);
   a.href = url;
-  a.download = `instagram-followers-${Date.now()}.csv`;
+  a.download = `cheeseme-${lastData.username || 'instagram'}-${date}.csv`;
   a.click();
-  URL.revokeObjectURL(url);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+function csvCell(value) {
+  const s = String(value);
+  return /[",\r\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+}
+
+// -----------------------------------------------------------------------------
+// Utilidades de UI
+// -----------------------------------------------------------------------------
+
+function updateLastScan(timestamp) {
+  if (timestamp) {
+    document.getElementById('lastScan').textContent = getTimeAgo(new Date(timestamp));
+  }
+}
+
+function showError(message) {
+  const el = document.getElementById('error');
+  el.textContent = `❌ ${message}`;
+  show('error');
+}
+
+function hideError() {
+  hide('error');
+}
+
+function show(id) {
+  document.getElementById(id).classList.remove('hidden');
+}
+
+function hide(id) {
+  document.getElementById(id).classList.add('hidden');
 }
 
 function showDonation() {
@@ -212,26 +244,17 @@ function showDonation() {
 }
 
 function getTimeAgo(date) {
-  const seconds = Math.floor((new Date() - date) / 1000);
-  
-  let interval = seconds / 31536000;
-  if (interval > 1) return Math.floor(interval) + ' años';
-  
-  interval = seconds / 2592000;
-  if (interval > 1) return Math.floor(interval) + ' meses';
-  
-  interval = seconds / 86400;
-  if (interval > 1) return Math.floor(interval) + ' días';
-  
-  interval = seconds / 3600;
-  if (interval > 1) return Math.floor(interval) + ' horas';
-  
-  interval = seconds / 60;
-  if (interval > 1) return Math.floor(interval) + ' minutos';
-  
+  const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
+  const units = [
+    [31536000, 'año', 'años'],
+    [2592000, 'mes', 'meses'],
+    [86400, 'día', 'días'],
+    [3600, 'hora', 'horas'],
+    [60, 'minuto', 'minutos']
+  ];
+  for (const [secs, singular, plural] of units) {
+    const n = Math.floor(seconds / secs);
+    if (n >= 1) return `Hace ${n} ${n === 1 ? singular : plural}`;
+  }
   return 'Hace un momento';
-}
-
-function sleep(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
 }
